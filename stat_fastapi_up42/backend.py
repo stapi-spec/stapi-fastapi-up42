@@ -46,7 +46,7 @@ PRODUCTS = [
 class StatUp42Backend:
 
     def __init__(self):
-        settings = Settings.load()
+        self.settings = Settings.load()
 
     def products(self, request: Request) -> list[Product]:
         """

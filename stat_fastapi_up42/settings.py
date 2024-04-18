@@ -15,10 +15,9 @@ class LogLevel(Enum):
 
 class Settings(BaseSettings):
     loglevel: LogLevel = LogLevel.INFO
-    database: str = "sqlite://"
-
+    BASE_URL: str = "https://api.up42.com"
     TOKEN: str | None = None
-    BASE_URL = "https://api.up42.com"
+
 
     @classmethod
     def load(cls) -> "Settings":
