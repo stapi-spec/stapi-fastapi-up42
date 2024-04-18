@@ -1,3 +1,6 @@
+import http.client
+import json
+
 from fastapi import Request
 from pydantic import (
     BaseModel,
@@ -10,6 +13,7 @@ from stat_fastapi.models.opportunity import (
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
+from stat_fastapi_up42.settings import Settings
 
 
 class Constraints(BaseModel):
@@ -40,6 +44,10 @@ PRODUCTS = [
 
 
 class StatUp42Backend:
+
+    def __init__(self):
+        settings = Settings.load()
+
     def products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
@@ -62,8 +70,39 @@ class StatUp42Backend:
         """
         Search for ordering opportunities for the given search parameters.
         """
-        opportunities = []
-        return opportunities
+        # Specify the server and port number
+        conn = http.client.HTTPConnection(self.settings.BASE_URL, 80)
+
+        # Step 1 Auth
+        conn.request(
+            "POST",
+            "/oauth/token",
+            body=json.dumps({"key": "value"}),
+            headers={"Content-type": "application/json", "Accept": "application/json"},
+        )
+        response = conn.getresponse()
+        data = response.read().decode()
+
+        # Step 2 get opportunities
+        conn.request(
+            "POST",
+            "/v2/tasking/opportunities",
+            body=json.dumps({"key": "value"}),
+            headers={"Content-type": "application/json", "Accept": "application/json"},
+        )
+        response = conn.getresponse()
+        data = response.read().decode()
+
+        print("Status:", response.status)
+        print("Response:", data.decode())
+
+        conn.close()
+
+        return [
+            f
+            for f in data["features"]
+            if f["properties"]["collectionName"] == search.product_id
+        ]
 
     async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
         """
