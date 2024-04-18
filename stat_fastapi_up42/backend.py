@@ -1,29 +1,19 @@
-import json
-from datetime import datetime
-from typing import cast
-
-import pytz
 from fastapi import Request
-from pydantic import BaseModel, Field, ValidationError, model_validator
-from shapely.geometry import shape
-
-from stat_fastapi.exceptions import ConstraintsException, NotFoundException
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+)
+from stat_fastapi.exceptions import NotFoundException
 from stat_fastapi.models.opportunity import (
     Opportunity,
-    OpportunityProperties,
     OpportunitySearch,
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
-from stat_fastapi_up42.models import (
-    ValidatedOpportunitySearch,
-)
-from stat_fastapi_up42.settings import Settings
 
 
 class Constraints(BaseModel):
-    foo: str = Field(..., description="A foo string")
-
+    model_config = ConfigDict(extra="forbid")
 
 
 PRODUCTS = [
@@ -50,10 +40,6 @@ PRODUCTS = [
 
 
 class StatUp42Backend:
-
-    def __init__(self):
-        settings = Settings.load()
-
     def products(self, request: Request) -> list[Product]:
         """
         Return a list of supported products.
