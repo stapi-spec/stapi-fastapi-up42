@@ -78,35 +78,38 @@ class StatUp42Backend:
         start = cast(tuple, search.datetime)[0]
         end = cast(tuple, search.datetime)[1]
 
-        response = requests.post(
-            f"{self.settings.BASE_URL}/v2/tasking/opportunities",
-            json={
+
+        upstream_request = {
                 "type": "FeatureCollection",
                 "features": [
                     {
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [13.327274322509767, 52.546817648166105],
+                            "coordinates": search.geometry.coordinates,
                         },
                         "properties": {
-                            "acquisitionStart": str(start),
-                            "acquisitionEnd": str(end),
+                            "acquisitionStart": start.isoformat().replace("+00:00", ".000Z"),
+                            "acquisitionEnd": end.isoformat().replace("+00:00", ".000Z"),
                         },
                     }
                 ],
-            },
-        )
+            }
 
-        for f in json.loads(response.text):
+        response = requests.post(
+            f"{self.settings.BASE_URL}/v2/tasking/opportunities",
+            json=upstream_request,
+        )
+        data = json.loads(response.text)
+        for f in data["features"]:
             if f["properties"]["collectionName"] == search.product_id:
                 opportunities.append(
                     Opportunity(
                         geometry=f["geometry"],
                         properties=OpportunityProperties(
                             datetime=(
-                                f["properties"]["acquisitionStart"],
-                                f["properties"]["acquisitionEnd"],
+                                f["properties"]["start_datetime"],
+                                f["properties"]["end_datetime"],
                             ),
                             product_id=f["properties"]["collectionName"],
                         ),
