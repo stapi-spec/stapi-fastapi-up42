@@ -18,7 +18,6 @@ from stat_fastapi.models.product import Product, Provider, ProviderRole
 from stat_fastapi_up42.models import (
     ValidatedOpportunitySearch,
 )
-from stat_fastapi_up42.repository import Repository
 from stat_fastapi_up42.settings import Settings
 
 
@@ -51,11 +50,9 @@ PRODUCTS = [
 
 
 class StatUp42Backend:
-    repository: Repository
 
     def __init__(self):
         settings = Settings.load()
-        self.repository = Repository(settings.database)
 
     def products(self, request: Request) -> list[Product]:
         """
@@ -86,19 +83,10 @@ class StatUp42Backend:
         """
         Create a new order.
         """
-        try:
-            validated = ValidatedOpportunitySearch(**search.model_dump(by_alias=True))
-        except ValidationError as exc:
-            error_dict = {str(index): error for index, error in enumerate(exc.errors())}
-            raise ConstraintsException(error_dict) from exc
-
-        return self.repository.add_order(validated)
+        raise NotImplementedError()
 
     async def get_order(self, order_id: str, request: Request):
         """
         Show details for order with `order_id`.
         """
-        feature = self.repository.get_order(order_id)
-        if feature is None:
-            raise NotFoundException()
-        return feature
+        raise NotImplementedError()
