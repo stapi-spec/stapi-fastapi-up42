@@ -1,6 +1,7 @@
-import http.client
 import json
+from typing import cast
 
+import requests
 from fastapi import Request
 from pydantic import (
     BaseModel,
@@ -9,10 +10,12 @@ from pydantic import (
 from stat_fastapi.exceptions import NotFoundException
 from stat_fastapi.models.opportunity import (
     Opportunity,
+    OpportunityProperties,
     OpportunityRequest,
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
+
 from stat_fastapi_up42.settings import Settings
 
 
@@ -22,7 +25,7 @@ class Constraints(BaseModel):
 
 PRODUCTS = [
     Product(
-        id="some-product",
+        id="PHR-tasking",
         description="Some product",
         license="propietary",
         providers=[
@@ -44,7 +47,6 @@ PRODUCTS = [
 
 
 class StatUp42Backend:
-
     def __init__(self):
         self.settings = Settings.load()
 
@@ -70,30 +72,47 @@ class StatUp42Backend:
         """
         Search for ordering opportunities for the given search parameters.
         """
-        # Specify the server and port number
 
-        breakpoint()
+        opportunities = []
 
-        conn = http.client.HTTPConnection(self.settings.BASE_URL, 443)
-        conn.request(
-            "POST",
-            "/v2/tasking/opportunities",
-            body=json.dumps({"key": "value"}),
-            headers={"Content-type": "application/json", "Accept": "application/json"},
+        start = cast(tuple, search.datetime)[0]
+        end = cast(tuple, search.datetime)[1]
+
+        response = requests.post(
+            f"{self.settings.BASE_URL}/v2/tasking/opportunities",
+            json={
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [13.327274322509767, 52.546817648166105],
+                        },
+                        "properties": {
+                            "acquisitionStart": str(start),
+                            "acquisitionEnd": str(end),
+                        },
+                    }
+                ],
+            },
         )
-        response = conn.getresponse()
-        data = response.read().decode()
 
-        print("Status:", response.status)
-        print("Response:", data)
-
-        conn.close()
-
-        return [
-            f
-            for f in data["features"]
-            if f["properties"]["collectionName"] == search.product_id
-        ]
+        for f in json.loads(response.text):
+            if f["properties"]["collectionName"] == search.product_id:
+                opportunities.append(
+                    Opportunity(
+                        geometry=f["geometry"],
+                        properties=OpportunityProperties(
+                            datetime=(
+                                f["properties"]["acquisitionStart"],
+                                f["properties"]["acquisitionEnd"],
+                            ),
+                            product_id=f["properties"]["collectionName"],
+                        ),
+                    )
+                )
+        return opportunities
 
     async def create_order(self, search: OpportunityRequest, request: Request) -> Order:
         """
