@@ -78,29 +78,31 @@ class StatUp42Backend:
         start = cast(tuple, search.datetime)[0]
         end = cast(tuple, search.datetime)[1]
 
-
-        upstream_request = {
+        response = requests.post(
+            f"{self.settings.BASE_URL}/v2/tasking/opportunities",
+            json={
                 "type": "FeatureCollection",
                 "features": [
                     {
                         "type": "Feature",
                         "geometry": {
-                            "type": "Point",
+                            "type": "Polygon",
                             "coordinates": search.geometry.coordinates,
                         },
                         "properties": {
-                            "acquisitionStart": start.isoformat().replace("+00:00", ".000Z"),
-                            "acquisitionEnd": end.isoformat().replace("+00:00", ".000Z"),
+                            "acquisitionStart": start.isoformat().replace(
+                                "+00:00", ".000Z"
+                            ),
+                            "acquisitionEnd": end.isoformat().replace(
+                                "+00:00", ".000Z"
+                            ),
                         },
                     }
                 ],
-            }
-
-        response = requests.post(
-            f"{self.settings.BASE_URL}/v2/tasking/opportunities",
-            json=upstream_request,
+            },
         )
         data = json.loads(response.text)
+
         for f in data["features"]:
             if f["properties"]["collectionName"] == search.product_id:
                 opportunities.append(
@@ -112,6 +114,7 @@ class StatUp42Backend:
                                 f["properties"]["end_datetime"],
                             ),
                             product_id=f["properties"]["collectionName"],
+                            incidence_angle="view:incidence_angle",
                         ),
                     )
                 )
