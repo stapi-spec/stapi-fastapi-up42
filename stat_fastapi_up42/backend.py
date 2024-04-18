@@ -9,7 +9,7 @@ from pydantic import (
 from stat_fastapi.exceptions import NotFoundException
 from stat_fastapi.models.opportunity import (
     Opportunity,
-    OpportunitySearch,
+    OpportunityRequest,
 )
 from stat_fastapi.models.order import Order
 from stat_fastapi.models.product import Product, Provider, ProviderRole
@@ -37,7 +37,7 @@ PRODUCTS = [
                 url="http://acme.example.com",
             )
         ],
-        constraints=Constraints,
+        parameters=Constraints,
         links=[],
     ),
 ]
@@ -65,25 +65,16 @@ class StatUp42Backend:
             raise NotFoundException() from exc
 
     async def search_opportunities(
-        self, search: OpportunitySearch, request: Request
+        self, search: OpportunityRequest, request: Request
     ) -> list[Opportunity]:
         """
         Search for ordering opportunities for the given search parameters.
         """
         # Specify the server and port number
-        conn = http.client.HTTPConnection(self.settings.BASE_URL, 80)
 
-        # Step 1 Auth
-        conn.request(
-            "POST",
-            "/oauth/token",
-            body=json.dumps({"key": "value"}),
-            headers={"Content-type": "application/json", "Accept": "application/json"},
-        )
-        response = conn.getresponse()
-        data = response.read().decode()
+        breakpoint()
 
-        # Step 2 get opportunities
+        conn = http.client.HTTPConnection(self.settings.BASE_URL, 443)
         conn.request(
             "POST",
             "/v2/tasking/opportunities",
@@ -94,7 +85,7 @@ class StatUp42Backend:
         data = response.read().decode()
 
         print("Status:", response.status)
-        print("Response:", data.decode())
+        print("Response:", data)
 
         conn.close()
 
@@ -104,7 +95,7 @@ class StatUp42Backend:
             if f["properties"]["collectionName"] == search.product_id
         ]
 
-    async def create_order(self, search: OpportunitySearch, request: Request) -> Order:
+    async def create_order(self, search: OpportunityRequest, request: Request) -> Order:
         """
         Create a new order.
         """

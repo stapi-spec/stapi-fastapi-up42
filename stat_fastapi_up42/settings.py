@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     BASE_URL: str = "https://api.up42.com"
     TOKEN: str | None = None
 
-
     @classmethod
     def load(cls) -> "Settings":
         settings = Settings()

@@ -1150,7 +1150,7 @@ pygeofilter = "^0.2.1"
 type = "git"
 url = "https://github.com/stat-utils/stat-fastapi.git"
 reference = "main"
-resolved_reference = "706f555fc2987a1ee736269bcc985d5e83813bd1"
+resolved_reference = "2a747a155080f77937f272bf8e1f81194583fafe"
 
 [[package]]
 name = "typing-extensions"
